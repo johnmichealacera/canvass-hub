@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { handleFileChange } from "@jmacera/cloudinary-image-upload";
-import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Import PDF.js with browser compatibility
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+
+// Configure PDF.js worker for browser environment
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface PDFUploadProps {
   onUpload: (url: string) => void;

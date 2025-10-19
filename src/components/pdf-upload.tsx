@@ -6,15 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { handleFileChange } from "@jmacera/cloudinary-image-upload";
 
-// Import pdfjsLib only in the browser to avoid SSR and type errors
-let pdfjsLib: any = null;
-if (typeof window !== 'undefined') {
-  // Conditional require to avoid Node import errors and TS errors
-  // @ts-ignore
-  pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-}
-
 
 interface PDFUploadProps {
   onUpload: (url: string) => void;
@@ -27,60 +18,71 @@ export function PDFUpload({ onUpload, onRemove, currentUrl }: PDFUploadProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Function to convert PDF to PNG
+  // Function to convert PDF to PNG using dynamic import
   const convertPdfToImage = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          
-          // Load PDF document
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-          const page = await pdf.getPage(1); // Get first page
-          
-          // Set up canvas
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          
-          if (!context) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-          
-          // Set canvas dimensions
-          const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          
-          // Render PDF page to canvas
-          await page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise;
-          
-          // Convert canvas to blob
-          canvas.toBlob((blob) => {
-            if (blob) {
-              // Create a new File object from the blob
-              const imageFile = new File([blob], `${file.name.replace('.pdf', '')}.png`, {
-                type: 'image/png',
-                lastModified: Date.now()
-              });
-              resolve(imageFile);
-            } else {
-              reject(new Error('Failed to convert canvas to blob'));
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Dynamic import to avoid build-time issues
+        const pdfjsLib = await import('pdfjs-dist');
+        
+        // Configure worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+        
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            
+            // Load PDF document
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const page = await pdf.getPage(1); // Get first page
+            
+            // Set up canvas
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            if (!context) {
+              reject(new Error('Could not get canvas context'));
+              return;
             }
-          }, 'image/png', 0.9);
-          
-        } catch (error) {
-          reject(error);
-        }
-      };
-      
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsArrayBuffer(file);
+            
+            // Set canvas dimensions
+            const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            // Render PDF page to canvas
+            await page.render({
+              canvasContext: context,
+              viewport: viewport
+            }).promise;
+            
+            // Convert canvas to blob
+            canvas.toBlob((blob) => {
+              if (blob) {
+                // Create a new File object from the blob
+                const imageFile = new File([blob], `${file.name.replace('.pdf', '')}.png`, {
+                  type: 'image/png',
+                  lastModified: Date.now()
+                });
+                resolve(imageFile);
+              } else {
+                reject(new Error('Failed to convert canvas to blob'));
+              }
+            }, 'image/png', 0.9);
+            
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsArrayBuffer(file);
+        
+      } catch (error) {
+        reject(new Error('Failed to load PDF.js library'));
+      }
     });
   };
 

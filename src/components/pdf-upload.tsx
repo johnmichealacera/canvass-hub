@@ -19,72 +19,72 @@ export function PDFUpload({ onUpload, onRemove, currentUrl }: PDFUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Function to convert PDF to PNG using dynamic import
-  const convertPdfToImage = async (file: File): Promise<File> => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Dynamic import to avoid build-time issues
-        const pdfjsLib = await import('pdfjs-dist');
+  // const convertPdfToImage = async (file: File): Promise<File> => {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       // Dynamic import to avoid build-time issues
+  //       const pdfjsLib = await import('pdfjs-dist');
         
-        // Configure worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  //       // Configure worker
+  //       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
         
-        const reader = new FileReader();
+  //       const reader = new FileReader();
         
-        reader.onload = async (e) => {
-          try {
-            const arrayBuffer = e.target?.result as ArrayBuffer;
+  //       reader.onload = async (e) => {
+  //         try {
+  //           const arrayBuffer = e.target?.result as ArrayBuffer;
             
-            // Load PDF document
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const page = await pdf.getPage(1); // Get first page
+  //           // Load PDF document
+  //           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  //           const page = await pdf.getPage(1); // Get first page
             
-            // Set up canvas
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
+  //           // Set up canvas
+  //           const canvas = document.createElement('canvas');
+  //           const context = canvas.getContext('2d');
             
-            if (!context) {
-              reject(new Error('Could not get canvas context'));
-              return;
-            }
+  //           if (!context) {
+  //             reject(new Error('Could not get canvas context'));
+  //             return;
+  //           }
             
-            // Set canvas dimensions
-            const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
+  //           // Set canvas dimensions
+  //           const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+  //           canvas.width = viewport.width;
+  //           canvas.height = viewport.height;
             
-            // Render PDF page to canvas
-            await page.render({
-              canvasContext: context,
-              viewport: viewport
-            }).promise;
+  //           // Render PDF page to canvas
+  //           await page.render({
+  //             canvasContext: context,
+  //             viewport: viewport
+  //           }).promise;
             
-            // Convert canvas to blob
-            canvas.toBlob((blob) => {
-              if (blob) {
-                // Create a new File object from the blob
-                const imageFile = new File([blob], `${file.name.replace('.pdf', '')}.png`, {
-                  type: 'image/png',
-                  lastModified: Date.now()
-                });
-                resolve(imageFile);
-              } else {
-                reject(new Error('Failed to convert canvas to blob'));
-              }
-            }, 'image/png', 0.9);
+  //           // Convert canvas to blob
+  //           canvas.toBlob((blob) => {
+  //             if (blob) {
+  //               // Create a new File object from the blob
+  //               const imageFile = new File([blob], `${file.name.replace('.pdf', '')}.png`, {
+  //                 type: 'image/png',
+  //                 lastModified: Date.now()
+  //               });
+  //               resolve(imageFile);
+  //             } else {
+  //               reject(new Error('Failed to convert canvas to blob'));
+  //             }
+  //           }, 'image/png', 0.9);
             
-          } catch (error) {
-            reject(error);
-          }
-        };
+  //         } catch (error) {
+  //           reject(error);
+  //         }
+  //       };
         
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsArrayBuffer(file);
+  //       reader.onerror = () => reject(new Error('Failed to read file'));
+  //       reader.readAsArrayBuffer(file);
         
-      } catch (error) {
-        reject(new Error('Failed to load PDF.js library'));
-      }
-    });
-  };
+  //     } catch (error) {
+  //       reject(new Error('Failed to load PDF.js library'));
+  //     }
+  //   });
+  // };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -119,12 +119,12 @@ export function PDFUpload({ onUpload, onRemove, currentUrl }: PDFUploadProps) {
       let fileToUpload: File;
       
       // Check if it's a PDF - convert to PNG
-      if (file.type === "application/pdf") {
-        fileToUpload = await convertPdfToImage(file);
-      } else {
+      // if (file.type === "application/pdf") {
+      //   fileToUpload = await convertPdfToImage(file);
+      // } else {
         // It's already an image - use as is
         fileToUpload = file;
-      }
+      // }
       
       // Cloudinary configuration - use image upload
       const cloudinaryUrl = process.env.NEXT_PUBLIC_CLOUDINARY_URL || "https://api.cloudinary.com/v1_1/your-cloud-name/image/upload";

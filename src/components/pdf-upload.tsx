@@ -6,11 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { handleFileChange } from "@jmacera/cloudinary-image-upload";
 
-// Import PDF.js with browser compatibility
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+// Import pdfjsLib only in the browser to avoid SSR and type errors
+let pdfjsLib: any = null;
+if (typeof window !== 'undefined') {
+  // Conditional require to avoid Node import errors and TS errors
+  // @ts-ignore
+  pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+}
 
-// Configure PDF.js worker for browser environment
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface PDFUploadProps {
   onUpload: (url: string) => void;
